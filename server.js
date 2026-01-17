@@ -7,6 +7,11 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 app.use(express.json());
 
+// --- EKLEME: VİDEOLARI DIŞARIYA AÇ ---
+// Bu satır sayesinde n8n /videos/video_ismi.mp4 diyerek videoyu çekebilecek
+app.use('/videos', express.static(path.join(__dirname, 'videos')));
+// -------------------------------------
+
 // Pexels API key - Tırnak içine alındı ve güvenli hale getirildi
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY || 'DXJFzRgdAtA2kNxLcWyfu4kzFKv930mFg9PBevhdYSUSpM8iZmPYIJTt';
 
@@ -140,13 +145,16 @@ async function processVideo(videoId, scenes, config) {
 
     videoJobs[videoId].status = 'ready';
     videoJobs[videoId].progress = 100;
-    videoJobs[videoId].videoPath = sceneFiles[0].video; // Şimdilik ilk sahneyi dönüyor
+    // n8n'in kolayca bulabilmesi için dosya adını kaydediyoruz
+    videoJobs[videoId].videoName = `${videoId}_scene0.mp4`; 
+    videoJobs[videoId].videoPath = sceneFiles[0].video;
 }
 
 // Durum sorgulama
 app.get('/api/short-video/:videoId/status', (req, res) => {
     const job = videoJobs[req.params.videoId];
     if (!job) return res.status(404).json({ error: 'Video not found' });
+    // n8n'in "Ready?" düğümü 'status' alanına bakar.
     res.json(job);
 });
 
